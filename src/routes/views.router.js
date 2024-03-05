@@ -80,6 +80,10 @@ router.get('/productsUpd', async (req, res) => {
 });
 
 
+router.get('/failregister', (req, res) => {
+  console.log("Failed Strategy views")
+  res.send({error:"Failed"})
+})
 
 // router.get("/products", async (req, res) => {
 //   console.log("/products")

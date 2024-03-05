@@ -12,7 +12,8 @@ import sessionsRouter from "./routes/sessions.router.js";
 import session from "express-session";
 import cookieParser from "cookie-parser";
 import MongoStore from "connect-mongo";
-
+import passport, { Passport } from "passport";
+import initializePassport from "./config/passport.config.js";
 
 const port = 9080
 //let mongoBase = "mongodb://localhost:27017/ecommerce";
@@ -27,13 +28,15 @@ app.use(session({
     store:MongoStore.create({
         mongoUrl:mongoBase,
         //mongoOptions:{useNewUrlParser:true,useUnifiedTopology:true},
-        ttl:1500,
+        ttl:150,
     }),
     secret:"secretCode",
     resave:true,
     saveUninitialized:true
 }))
-
+initializePassport();
+app.use(passport.initialize());
+app.use(passport.session());
 
 mongoose.connect(mongoBase)
 .then(success => console.log('Conectado a la base'))
