@@ -23,7 +23,7 @@ const app = express();
 const httpServer =  app.listen(port,() => console.log('Servidor arriba  puerto:' + port))
 const io = new Server(httpServer);
 
-app.use(cookieParser());
+app.use(cookieParser("secret_cookie"));
 app.use(session({
     store:MongoStore.create({
         mongoUrl:mongoBase,
@@ -34,6 +34,7 @@ app.use(session({
     resave:true,
     saveUninitialized:true
 }))
+
 initializePassport();
 app.use(passport.initialize());
 app.use(passport.session());

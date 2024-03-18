@@ -7,6 +7,7 @@ import productsRouter from "./productsModel.router.js"
 import cartsRouter from "./cartsModel.router.js"
 import usersRouter from "./sessions.router.js"
 import UsersDAO from "../daos/users.dao.js";
+import passport from 'passport';
 
 
 //const dataID = document.getElementById('update').value;
@@ -38,7 +39,6 @@ router.get('/register', (req, res) => {
 });
 
 router.get("/login", (req, res) => {
-
   if(req.session.user){
       res.redirect("/products");
   } else {
@@ -84,6 +84,15 @@ router.get('/failregister', (req, res) => {
   console.log("Failed Strategy views")
   res.send({error:"Failed"})
 })
+
+router.get('/github',passport.authenticate('github',{scope:['user:email']}),async (req,res)=>{console.log('aca github')})
+
+router.get('/githubcallback',passport.authenticate('github',{failureRedirect:'/login'}),async (req,res)=>{
+    console.log('githubcallback')
+    req.session.user = req.user;
+    res.redirect('/products');
+})
+
 
 // router.get("/products", async (req, res) => {
 //   console.log("/products")

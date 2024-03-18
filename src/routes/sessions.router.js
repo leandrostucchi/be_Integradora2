@@ -1,3 +1,5 @@
+import Router from "express";
+import jwt from "jsonwebtoken";
 import express from 'express'
 import UsersDAO from "../daos/users.dao.js";
 
@@ -5,7 +7,6 @@ import productsRouter from "./productsModel.router.js"
 import cartsRouter from "./cartsModel.router.js"
 import { createHash, isValidPassword } from '../utils.js';
 import passport from 'passport';
-//import usersRouter from "./sessions.router.js"
 
 
 const router = express.Router();
@@ -13,11 +14,12 @@ const router = express.Router();
 //ROUTES
 router.use("/api/products", productsRouter);
 router.use("/api/carts", cartsRouter);
-//router.use("/api/sessions", usersRouter);
 
 
 
-router.post("/register",passport.authenticate('register',{failureRedirect:'/failregister'}), async (req, res) => {
+
+//router.post("/register",passport.authenticate('register',{failureRedirect:'/failregister'}), async (req, res) => {
+router.post("/register", async (req, res) => {
     console.log("/register con autenticacion")
     let first_name = req.body.first_name;
     let last_name = req.body.last_name;
@@ -30,49 +32,68 @@ router.post("/register",passport.authenticate('register',{failureRedirect:'/fail
     }
 
     let emailUsed = await UsersDAO.getUserByEmail(email);
-console.log(emailUsed)
+console.log("email " + emailUsed)
     if(emailUsed){
         res.redirect("/register");
     } else {
         console.log(password)
         await UsersDAO.insert(first_name,last_name,age,email,password);
-        res.redirect("/login");
+        res.redirect("/current");
     }
 
 })
 
-router.get('/failregister', (req, res) => {
-    console.log("Failed Strategy")
-    res.send({error:"Failed"})
-})
+// router.get('/failregister', (req, res) => {
+//     console.log("Failed Strategy")
+//     res.send({error:"Failed"})
+// })
 
 
-router.post("/login",passport.authenticate('login',{failureRedirect:'/faillogin'}), async (req, res) => {
-    if (!req.user) return res.status(400).send({status:"error",error:"Invalid Credentials"})
-    console.log("entre por aca")
 
-    req.session.user = {
-        first_name: req.user.first_name,
-         last_name: req.user.last_name,
-         email: req.user.email,
-         age: req.user.age,
+//router.post("/login",passport.authenticate('/login',{failureRedirect:'/faillogin'}), async (req, res) => {
+router.post("/login", async (req, res) => {
+    const user =  req.body
+    console.log("entre por aca " +  JSON.stringify(user))
+    if (!user){ res.status(400).send({status:"error",error:"Invalid Credentials"})
+}else{
+    let UserBD = await UsersDAO.getUserByEmail(user.email);
+    console.log(UserBD)
+    console.log("token")
+    let token = jwt.sign({id: UserBD._id}, 'secret_jwt', { expiresIn: '1h' });
+    console.log("token " + token)
+    console.log("cookies")
+    res.cookie("jwt", token, {
+        signed:true,
+        httpOnly:true,
+        maxAge: 1000*60*60
+    }).json({status:200, msg:"Logged in"});
+}
+//     req.session.user = {
+//         first_name: req.user.first_name,
+//          last_name: req.user.last_name,
+//          email: req.user.email,
+//          age: req.user.age,
 
-    }
-console.log("voy a products")
-    res.redirect("/products");
+//     }
+// console.log("voy a products")
+//     res.redirect("/products");
     //res.send({status:"success",payload:req.user})
 })
 
-router.get('/faillogin', (req, res) => {
-    console.log("Failed login")
-    res.send({error:"Failed login"})
-})
+// router.get('/faillogin', (req, res) => {
+//     console.log("Failed login")
+//     res.send({error:"Failed login"})
+// })
 
+router.get("/current", passport.authenticate("jwt", {session:false}), (req, res) => {
+    console.log("req " + req)
+    res.json(req.user);
+});
 
 router.get("/logout", (req, res) => {
-    req.session.destroy((err) => {
-        res.redirect("/home");
-    })
+    //req.session.destroy((err) => {res.redirect("/home");})
+    res.clearCookie("jwt");
+    res.status(200).json({status:200, msg:"Logged out"}); 
 })
 
 
@@ -83,6 +104,13 @@ router.get('/products', async (req, res) => {
 });
 
 
+router.get('/github',passport.authenticate('github',{scope:['user:email']}),async (req,res)=>{console.log('aca github')})
+
+router.get('/githubcallback',passport.authenticate('github',{failureRedirect:'/login'}),async (req,res)=>{
+    console.log('githubcallback')
+    req.session.user = req.user;
+    res.redirect('/');
+})
 
 
 export default router;
