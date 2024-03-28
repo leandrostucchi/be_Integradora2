@@ -15,12 +15,18 @@ import MongoStore from "connect-mongo";
 import passport, { Passport } from "passport";
 import initializePassport from "./config/passport.config.js";
 
-const port = 9080
+import config from "./config/config.js";
+
+console.log("inicio config")
+console.log(config.port)
+console.log("fin config")
+
+//const port = 9080
 //let mongoBase = "mongodb://localhost:27017/ecommerce";
 let mongoBase = 'mongodb+srv://lstucchi:tGrjLHdnChKYsgoN@cluster0.s4wk2id.mongodb.net/ecommerce?retryWrites=true&w=majority'
 const app = express();
 
-const httpServer =  app.listen(port,() => console.log('Servidor arriba  puerto:' + port))
+const httpServer =  app.listen(config.port,() => console.log('Servidor arriba  puerto:' + config.port))
 const io = new Server(httpServer);
 
 app.use(cookieParser("secret_cookie"));
